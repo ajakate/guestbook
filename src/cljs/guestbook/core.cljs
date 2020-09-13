@@ -1,6 +1,17 @@
 (ns guestbook.core
   (:require [reagent.core :as r]
-            [reagent.dom  :as dom]))
+            [reagent.dom  :as dom]
+            [ajax.core :refer [GET POST]]))
+
+(defn send-message! [fields]
+  (POST "/message"
+    {:params @fields
+     :headers
+     {"Accept" "application/transit+json"
+    ;   "x-csrf-token" (.-value (.getElementById js/document "token"))}
+      "x-csrf-token" (-> js/document (.getElementById "token") .-value)}
+     :handler #(.log js/console (str "response:" %))
+     :error-handler #(.error js/console (str "error:" %))}))
 
 (defn message-form []
   (let [fields (r/atom {})]
@@ -21,7 +32,8 @@
                :on-change #(swap! fields assoc :message (-> % .-target .-value))}]]
             [:input.button.is-primary
              {:type :submit
-              :value "comment"}]])))
+              :value "comment"
+              :on-click #(send-message! fields)}]])))
 
 (defn home []
   [:div.content>div.columns.is-centered>div.column.is-two-thirds
