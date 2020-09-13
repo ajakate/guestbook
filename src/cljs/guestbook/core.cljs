@@ -2,20 +2,23 @@
   (:require [reagent.core :as r]
             [reagent.dom  :as dom]
             [ajax.core :refer [GET POST]]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [guestbook.validation :refer [validate-message]]))
 
 (defn send-message! [fields errors]
-  (POST "/message"
-    {:params @fields
-     :headers
-     {"Accept" "application/transit+json"
-      "x-csrf-token" (-> js/document (.getElementById "token") .-value)}
-     :handler #(do
-                 (.log js/console (str "response: " %))
-                 (reset! errors nil))
-     :error-handler #(do
-                       (.error js/console (str "error:" %))
-                       (reset! errors (get-in % [:response :errors])))}))
+  (if-let [validation-errors (validate-message @fields)]
+    (reset! errors validation-errors)
+    (POST "/message"
+      {:params @fields
+       :headers
+       {"Accept" "application/transit+json"
+        "x-csrf-token" (-> js/document (.getElementById "token") .-value)}
+       :handler #(do
+                   (.log js/console (str "response: " %))
+                   (reset! errors nil))
+       :error-handler #(do
+                         (.error js/console (str "error:" %))
+                         (reset! errors (get-in % [:response :errors])))})))
 
 (defn errors-component [errors id]
   (when-let [error (id @errors)]
