@@ -100,13 +100,11 @@
     (fn []
       [:div.content>div.columns.is-centered>div.column.is-two-thirds
        (if @(rf/subscribe [:messages/loading?])
-         [:div>div.row>div.span12>h3 "Loading Messages..."]
-         [:div 
+         [:h3 "Loading Messages..."]
+         [:div
+          [:div.columns>div.column [:h3 "Messages"] [message-list messages]]
           [:div.columns>div.column
-           [:h3 "Messages"]
-           [message-list messages]]
-          [:div.columns>div.column
-           [message-form messages]]])])))
+           [message-form]]])])))
 
 (dom/render
  [home]
