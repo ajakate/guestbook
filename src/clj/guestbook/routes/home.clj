@@ -10,9 +10,10 @@
 (defn home-page [{:keys [flash] :as request}]
   (layout/render
    request
-   "home.html"
-   (merge {:messages (db/get-messages)}
-          (select-keys flash [:name :message :errors]))))
+   "home.html"))
+
+(defn message-list [_]
+  (response/ok {:messages (vec (db/get-messages))}))
 
 (defn save-message! [{:keys [params]}]
   (if-let [errors (validate-message params)]
@@ -33,4 +34,5 @@
                  middleware/wrap-formats]}
    ["/" {:get home-page}]
    ["/message" {:post save-message!}]
+   ["/messages" {:get message-list}]
    ["/about" {:get about-page}]])
