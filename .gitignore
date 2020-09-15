@@ -17,3 +17,4 @@ profiles.clj
 
 *.mv.db
 *.trace.db
+.shadow-cljs
