@@ -100,6 +100,11 @@
  (fn [db _]
    (:messages/list db)))
 
+(rf/reg-event-db
+ :message/add
+ (fn [db [_ message]]
+   (update db :messages/list conj message)))
+
 (rf/reg-event-fx
  :message/send!
  (fn [{:keys [db]} [_ fields]]
