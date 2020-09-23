@@ -32,10 +32,11 @@
                  [ring/ring-defaults "0.3.2"]
                  [selmer "1.12.18"]
                  [cljs-ajax "0.8.0"]
-                ;;  [org.clojure/clojurescript "1.10.520" :scope "provided"]
+                ;;  [org.clojure/clojurescript "1.10.520" :scope "provided"] # TODO: mention the removal of this
                  [reagent "0.10.0"]
                  [re-frame "1.0.0"]
-                 [thheller/shadow-cljs "2.8.29"]]
+                 [thheller/shadow-cljs "2.8.29"]
+                 [com.taoensso/sente "1.15.0"]]
 
   :min-lein-version "2.0.0"
 
