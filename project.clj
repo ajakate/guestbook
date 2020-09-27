@@ -6,7 +6,6 @@
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [cheshire "5.9.0"]
                  [clojure.java-time "0.3.2"]
-                 [com.h2database/h2 "1.4.200"]
                  [conman "0.8.4"]
                  [cprop "0.1.15"]
                  [expound "0.8.3"]
@@ -36,7 +35,8 @@
                  [reagent "0.10.0"]
                  [re-frame "1.0.0"]
                  [thheller/shadow-cljs "2.8.29"]
-                 [com.taoensso/sente "1.15.0"]]
+                 [com.taoensso/sente "1.15.0"]
+                 [org.postgresql/postgresql "42.2.6"]]
 
   :min-lein-version "2.0.0"
 

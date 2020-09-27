@@ -1,0 +1,5 @@
+#! /bin/bash
+docker exec -it guestbook_db_1 psql -U postgres -c 'drop database if exists guestbook'
+docker exec -it guestbook_db_1 psql -U postgres -c 'DROP user IF EXISTS guestbook'
+docker exec -it guestbook_db_1 psql -U postgres -c "create user guestbook with password 'password'"
+docker exec -it guestbook_db_1 psql -U postgres -c 'CREATE DATABASE guestbook WITH OWNER guestbook'
