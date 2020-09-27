@@ -135,6 +135,35 @@
         (rf/dispatch [:form/set-server-errors errors]))))
    {:db (dissoc db :form/server-errors)}))
 
+(defn text-input [{val :value
+                   attrs :attrs
+                   :keys [on-save]}]
+  (let [draft (r/atom nil)
+        value (r/track #(or @draft @val ""))]
+    (fn []
+      [:input.input
+       (merge attrs
+              {:type :text
+               :on-focus #(reset! draft (or @val ""))
+               :on-blur (fn []
+                          (on-save (or @draft ""))
+                          (reset! draft nil))
+               :on-change #(reset! draft (.. % -target -value)) :value @value})])))
+
+(defn textarea-input [{val :value
+                       attrs :attrs
+                       :keys [on-save]}]
+  (let [draft (r/atom nil)
+        value (r/track #(or @draft @val ""))]
+    (fn []
+      [:textarea.textarea
+       (merge attrs
+              {:on-focus #(reset! draft (or @val ""))
+               :on-blur (fn []
+                          (on-save (or @draft ""))
+                          (reset! draft nil))
+               :on-change #(reset! draft (.. % -target -value)) :value @value})])))
+
 (defn handle-response! [response]
   (if-let [errors (:errors response)]
     (rf/dispatch [:form/set-server-errors errors])
@@ -169,24 +198,16 @@
    [:div.field
     [:label.label {:for :name} "Name"]
     [errors-component :name]
-    [:input.input
-     {:type :text
-      :name :name
-      :on-change #(rf/dispatch
-                   [:form/set-field
-                    :name
-                    (.. % -target -value)])
-      :value @(rf/subscribe [:form/field :name])}]]
+    [text-input {:attrs {:name :name}
+                 :value (rf/subscribe [:form/field :name])
+                 :on-save #(rf/dispatch [:form/set-field :name %])}]]
    [:div.field
     [:label.label {:for :message} "Message"]
     [errors-component :message]
-    [:textarea.textarea
-     {:name :message
-      :value @(rf/subscribe [:form/field :message])
-      :on-change #(rf/dispatch
-                   [:form/set-field
-                    :message
-                    (.. % -target -value)])}]]
+    [textarea-input
+     {:attrs {:name :message}
+      :value (rf/subscribe [:form/field :message])
+      :on-save #(rf/dispatch [:form/set-field :message %])}]]
    [:input.button.is-primary
     {:type :submit
      :disabled @(rf/subscribe [:form/validation-errors?])
