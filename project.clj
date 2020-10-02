@@ -36,7 +36,8 @@
                  [re-frame "1.0.0"]
                  [thheller/shadow-cljs "2.8.29"]
                  [com.taoensso/sente "1.15.0"]
-                 [org.postgresql/postgresql "42.2.6"]]
+                 [org.postgresql/postgresql "42.2.6"]
+                 [buddy "2.0.0"]]
 
   :min-lein-version "2.0.0"
 
