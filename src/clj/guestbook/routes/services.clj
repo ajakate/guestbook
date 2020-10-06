@@ -10,6 +10,7 @@
    [reitit.ring.middleware.parameters :as parameters]
    [guestbook.messages :as msg]
    [guestbook.auth :as auth]
+   [spec-tools.data-spec :as ds]
    [guestbook.middleware :as middleware]
    [ring.util.http-response :as response]
    [guestbook.middleware.formats :as formats]))
@@ -54,6 +55,22 @@
       :handler
       (fn [_]
         (response/ok (msg/message-list)))}}]
+   ["/session"
+    {:get
+     {:responses
+      {200
+       {:body
+        {:session
+         {:identity
+          (ds/maybe
+           {:login string?
+            :created_at inst?})}}}}
+      :handler
+      (fn [{{:keys [identity]} :session}]
+        (response/ok {:session
+                      {:identity
+                       (not-empty
+                        (select-keys identity [:login :created_at]))}}))}}]
    ["/login"
     {:post {:parameters
             {:body
@@ -80,6 +97,12 @@
                                         user)))
                 (response/unauthorized
                  {:message "Incorrect login or password."})))}}]
+   ["/logout"
+    {:post {:handler
+            (fn [_]
+              (->
+               (response/ok)
+               (assoc :session nil)))}}]
    ["/register"
     {:post {:parameters
             {:body
