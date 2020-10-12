@@ -2,6 +2,7 @@
   (:require [clojure.tools.logging :as log]
             [guestbook.messages :as msg]
             [guestbook.middleware :as middleware]
+            [guestbook.session :as session]
             [mount.core :refer [defstate]]
             [taoensso.sente :as sente]
             [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]))
@@ -9,48 +10,58 @@
 (defstate socket
   :start (sente/make-channel-socket!
           (get-sch-adapter)
-          {:user-id-fn
-           (fn [ring-req]
-             (get-in ring-req [:params :client-id]))}))
+          {:user-id-fn (fn [ring-req]
+                         (get-in ring-req [:params :client-id]))}))
 
 (defn send! [uid message]
   (println "Sending message: " message)
   ((:send-fn socket) uid message))
 
-(defmulti handle-message
-  (fn [{:keys [id]}] id))
+(defmulti handle-message (fn [{:keys [id]}]
+                           id))
 
 (defmethod handle-message :default
   [{:keys [id]}]
   (log/debug "Received unrecognized websocket event type: " id)
   {:error (str "Unrecognized websocket event type: " (pr-str id))
-   :id id})
+   :id    id})
 
+(defmethod handle-message :chsk/ws-ping
+  [{:keys [id] :as msg}]
+  (log/trace "Ping: " msg)
+  nil)
 
 (defmethod handle-message :message/create!
-  [{:keys [?data uid] :as message}]
+  [{:keys [?data uid session] :as message}]
   (let [response (try
-                   (msg/save-message! ?data)
-                   (assoc ?data :timestamp (java.util.Date.))
+                   (msg/save-message! (:identity session) ?data)
                    (catch Exception e
-                     (let [{id :guestbook/error-id errors :errors}
-                           (ex-data e)]
-                       (case id :validation {:errors errors} ;;else
-                             {:errors
-                              {:server-error ["Failed to save message!"]}}))))]
+                     (let [{id     :guestbook/error-id
+                            errors :errors} (ex-data e)]
+                       (case id
+                         :validation
+                         {:errors errors}
+                         ;;else
+                         {:errors
+                          {:server-error ["Failed to save message!"]}}))))]
     (if (:errors response)
       (do
         (log/debug "Failed to save message: " ?data)
-        response) (do
-                    (doseq [uid (:any @(:connected-uids socket))]
-                      (send! uid [:message/add response]))
-                    {:success true}))))
+        response)
+      (do
+        (doseq [uid (:any @(:connected-uids socket))]
+          (send! uid [:message/add response]))
+        {:success true}))))
 
-(defn receive-message!
-  [{:keys [id ?reply-fn] :as message}]
+(defn receive-message! [{:keys [id ?reply-fn ring-req]
+                         :as   message}]
   (log/debug "Got message with id: " id)
-  (let [reply-fn (or ?reply-fn (fn [_]))]
-    (when-some [response (handle-message message)]
+  (let [reply-fn (or ?reply-fn (fn [_]))
+        session (session/read-session ring-req)
+        response (-> message
+                     (assoc :session session)
+                     handle-message)]
+    (when response
       (reply-fn response))))
 
 (defstate channel-router
@@ -66,4 +77,3 @@
                  middleware/wrap-formats]
     :get (:ajax-get-or-ws-handshake-fn socket)
     :post (:ajax-post-fn socket)}])
-

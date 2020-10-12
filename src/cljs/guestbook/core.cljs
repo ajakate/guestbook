@@ -78,12 +78,18 @@
 
 (defn message-list [messages]
   [:ul.messages
-   (for [{:keys [timestamp message name]} @messages]
+   (for [{:keys [timestamp message name author]} @messages]
      ^{:key timestamp}
      [:li
       [:time (.toLocaleString timestamp)]
       [:p message]
-      [:p " - " name]])])
+      [:p " - " name
+       ;; Add the author (e.g. <@username>)
+       " <"
+       (if author
+         (str "@" author)
+         [:span.is-italic "account not found"])
+       ">"]])])
 
 (rf/reg-event-db
  :message/add
@@ -124,6 +130,7 @@
  (fn [db _]
    (:form/server-errors db)))
 
+;;Validation errors are reactively computed
 (rf/reg-sub
  :form/validation-errors
  :<- [:form/fields]
@@ -222,8 +229,7 @@
      :disabled @(rf/subscribe [:form/validation-errors?])
      :on-click #(rf/dispatch [:message/send!
                               @(rf/subscribe [:form/fields])])
-     :value "comment"}]
-   ])
+     :value "comment"}]])
 
 (defn reload-messages-button []
   (let [loading? (rf/subscribe [:messages/loading?])]
